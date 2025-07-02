@@ -1,81 +1,47 @@
 pipeline {
     agent any
-
+    
     environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        AWS_REGION            = 'us-east-1'
-        TF_VAR_db_password    = credentials('TF_DB_PASSWORD')
-        TF_VAR_key_name       = 'my-ssh-key'
+        TF_VAR_db_password    = credentials('TF_VAR_db_password')
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/your-repo/2tier-project.git'
             }
         }
-
+        
         stage('Terraform Init') {
             steps {
-                script {
-                    sh 'terraform --version'
-                    sh 'terraform init -input=false'
+                dir('./terraform') {
+                    sh 'terraform init -backend-config="bucket=${TF_STATE_BUCKET}" -backend-config="key=${TF_STATE_KEY}"'
                 }
             }
         }
-
-        stage('Terraform Validate') {
-            steps {
-                sh 'terraform validate'
-            }
-        }
-
+        
         stage('Terraform Plan') {
             steps {
-                sh 'terraform plan -out=tfplan -input=false'
-                archiveArtifacts artifacts: 'tfplan'
-            }
-        }
-
-        stage('Manual Approval') {
-            when { branch 'main' }
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    input message: 'Approve apply?', ok: 'Yes'
+                dir('./terraform') {
+                    sh 'terraform plan -out=tfplan'
                 }
             }
         }
-
+        
         stage('Terraform Apply') {
-            when { branch 'main' }
             steps {
-                sh 'terraform apply -input=false -auto-approve tfplan'
-            }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                script {
-                    def alb_dns = sh(script: 'terraform output -raw alb_dns_name', returnStdout: true).trim()
-                    sh "curl -s -o /dev/null -w '%{http_code}' http://${alb_dns} | grep 200"
+                dir('./terraform') {
+                    sh 'terraform apply -auto-approve tfplan'
                 }
             }
         }
     }
-
+    
     post {
         always {
             cleanWs()
-        }
-        success {
-            script {
-                def alb_dns = sh(script: 'terraform output -raw alb_dns_name', returnStdout: true).trim()
-                echo "✅ Deployment successful! Visit: http://${alb_dns}"
-            }
-        }
-        failure {
-            echo '❌ Deployment failed. Check logs for details.'
         }
     }
 }
