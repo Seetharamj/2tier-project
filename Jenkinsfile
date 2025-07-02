@@ -34,13 +34,14 @@ pipeline {
     }
     
     post {
+  post {
     always {
-        node {
-            cleanWs()
-        }
+        cleanWs()
     }
     failure {
         echo '❌ Pipeline failed - check logs'
     }
+}
+
 }
 }
