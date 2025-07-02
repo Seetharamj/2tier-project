@@ -10,6 +10,12 @@ variable "project_name" {
   default     = "2tier-app"
 }
 
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
@@ -46,6 +52,12 @@ variable "web_instance_type" {
   default     = "t3.micro"
 }
 
+variable "web_ami" {
+  description = "AMI ID for web servers"
+  type        = string
+  default     = "ami-0c55b159cbfafe1f0"
+}
+
 variable "app_instance_count" {
   description = "Number of app instances"
   type        = number
@@ -58,16 +70,10 @@ variable "app_instance_type" {
   default     = "t3.micro"
 }
 
-variable "web_ami" {
-  description = "AMI ID for web servers"
-  type        = string
-  default     = "ami-0c55b159cbfafe1f0" # Amazon Linux 2
-}
-
 variable "app_ami" {
   description = "AMI ID for app servers"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0" # Amazon Linux 2
+  default     = "ami-0c55b159cbfafe1f0"
 }
 
 variable "key_name" {
@@ -103,13 +109,4 @@ variable "allocated_storage" {
   description = "Allocated storage for database in GB"
   type        = number
   default     = 20
-}
-variable "ec2_ami_id" {
-  description = "AMI ID for EC2 instance"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
 }
