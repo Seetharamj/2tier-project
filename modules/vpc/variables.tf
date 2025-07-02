@@ -1,23 +1,30 @@
-variable "cidr_block" {
-  description = "The CIDR block for the VPC"
+variable "project_name" {
+  description = "Name of the project"
   type        = string
-  default     = "10.0.0.0/16"
 }
 
-variable "env_prefix" {
-  description = "Environment prefix for resource names and tags"
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
   type        = string
-  default     = "dev"
 }
 
-variable "public_subnet_count" {
-  description = "Number of public subnets to create"
-  type        = number
-  default     = 2
+variable "public_subnets" {
+  description = "List of public subnets"
+  type        = list(string)
 }
 
-variable "private_subnet_count" {
-  description = "Number of private subnets to create"
-  type        = number
-  default     = 2
+variable "private_subnets" {
+  description = "List of private subnets"
+  type        = list(string)
+}
+
+variable "database_subnets" {
+  description = "List of database subnets"
+  type        = list(string)
+}
+
+variable "admin_ips" {
+  description = "List of admin IPs for SSH access"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
