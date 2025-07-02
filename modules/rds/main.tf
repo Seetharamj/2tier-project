@@ -1,40 +1,10 @@
-variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
-}
-
-variable "private_subnets" {
-  description = "List of private subnet IDs"
-  type        = list(string)
-}
-
-variable "db_name" {
-  description = "Database name"
-  type        = string
-}
-
-variable "db_username" {
-  description = "Database username"
-  type        = string
-}
-
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
-}
-
-variable "env_prefix" {
-  description = "Environment prefix for resource names"
-  type        = string
-}
-
 resource "aws_security_group" "rds_sg" {
   name        = "${var.env_prefix}-rds-sg"
   description = "Security group for RDS"
   vpc_id      = var.vpc_id
 
   ingress {
+    description     = "MySQL access from web servers"
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
@@ -49,7 +19,8 @@ resource "aws_security_group" "rds_sg" {
   }
 
   tags = {
-    Name = "${var.env_prefix}-rds-sg"
+    Name        = "${var.env_prefix}-rds-sg"
+    Environment = var.env_prefix
   }
 }
 
@@ -58,16 +29,17 @@ resource "aws_db_subnet_group" "rds" {
   subnet_ids = var.private_subnets
 
   tags = {
-    Name = "${var.env_prefix}-rds-subnet-group"
+    Name        = "${var.env_prefix}-rds-subnet-group"
+    Environment = var.env_prefix
   }
 }
 
 resource "aws_db_instance" "default" {
-  allocated_storage      = 20
-  storage_type           = "gp2"
+  allocated_storage      = var.allocated_storage
+  storage_type           = var.storage_type
   engine                 = "mysql"
-  engine_version         = "5.7"
-  instance_class         = "db.t2.micro"
+  engine_version         = var.engine_version
+  instance_class         = var.instance_class
   db_name                = var.db_name
   username               = var.db_username
   password               = var.db_password
@@ -75,13 +47,12 @@ resource "aws_db_instance" "default" {
   skip_final_snapshot    = true
   db_subnet_group_name   = aws_db_subnet_group.rds.name
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  multi_az               = false
+  multi_az               = var.multi_az
+  publicly_accessible    = false
+  backup_retention_period = var.backup_retention_period
 
   tags = {
-    Name = "${var.env_prefix}-rds-instance"
+    Name        = "${var.env_prefix}-rds-instance"
+    Environment = var.env_prefix
   }
-}
-
-output "rds_endpoint" {
-  value = aws_db_instance.default.endpoint
 }
