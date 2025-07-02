@@ -4,51 +4,61 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        AWS_REGION           = 'us-east-1'
-        TF_VAR_db_password   = credentials('DB_PASSWORD')
+        TF_VAR_db_password    = credentials('TF_DB_PASSWORD')
+        TF_VAR_key_name       = 'my-ssh-key'
     }
     
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+                sh 'terraform version'
             }
         }
         
         stage('Terraform Init') {
             steps {
-                dir('2tier-project') {
-                    sh 'terraform init'
-                }
+                sh '''
+                cd 2tier-project
+                terraform init -input=false -backend-config="bucket=my-terraform-state-bucket" -backend-config="key=2tier-project/terraform.tfstate"
+                '''
+            }
+        }
+        
+        stage('Terraform Validate') {
+            steps {
+                sh 'cd 2tier-project && terraform validate'
             }
         }
         
         stage('Terraform Plan') {
             steps {
-                dir('2tier-project') {
-                    sh 'terraform plan -out=tfplan'
+                sh 'cd 2tier-project && terraform plan -out=tfplan -input=false'
+                archiveArtifacts artifacts: '2tier-project/tfplan'
+            }
+        }
+        
+        stage('Manual Approval') {
+            when { branch 'main' }
+            steps {
+                timeout(time: 30, unit: 'MINUTES') {
+                    input message: 'Apply Terraform changes?', ok: 'Apply'
                 }
             }
         }
         
         stage('Terraform Apply') {
-            when {
-                branch 'main'
-            }
+            when { branch 'main' }
             steps {
-                dir('2tier-project') {
-                    sh 'terraform apply -auto-approve tfplan'
-                }
+                sh 'cd 2tier-project && terraform apply -input=false -auto-approve tfplan'
             }
         }
         
-        stage('Terraform Destroy') {
-            when {
-                branch 'cleanup'
-            }
+        stage('Infrastructure Tests') {
             steps {
-                dir('2tier-project') {
-                    sh 'terraform destroy -auto-approve'
+                script {
+                    def alb_dns = sh(script: 'cd 2tier-project && terraform output -raw alb_dns_name', returnStdout: true).trim()
+                    sh "curl -s -o /dev/null -w '%{http_code}' http://${alb_dns} | grep 200"
                 }
             }
         }
@@ -60,14 +70,12 @@ pipeline {
         }
         success {
             script {
-                if (env.BRANCH_NAME == 'main') {
-                    def alb_dns = sh(script: 'cd 2tier-project && terraform output -raw alb_dns_name', returnStdout: true).trim()
-                    echo "Application Load Balancer DNS: http://${alb_dns}"
-                    
-                    def rds_endpoint = sh(script: 'cd 2tier-project && terraform output -raw rds_endpoint', returnStdout: true).trim()
-                    echo "RDS Endpoint: ${rds_endpoint}"
-                }
+                def alb_dns = sh(script: 'cd 2tier-project && terraform output -raw alb_dns_name', returnStdout: true).trim()
+                slackSend(color: 'good', message: "2-Tier deployment successful!\nApplication URL: http://${alb_dns}")
             }
+        }
+        failure {
+            slackSend(color: 'danger', message: "2-Tier deployment failed in ${env.STAGE_NAME}")
         }
     }
 }
