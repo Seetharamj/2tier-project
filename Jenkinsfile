@@ -19,7 +19,7 @@ pipeline {
             steps {
                 sh '''
                     terraform init \
-                        -backend-config="bucket=seetharam-terraform-states" \
+                        -backend-config="bucket=seetharam-terraform-108108" \
                         -backend-config="key=2tier-project/terraform.tfstate" \
                         -backend-config="region=us-east-1"
                 '''
