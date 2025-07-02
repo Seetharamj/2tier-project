@@ -1,58 +1,31 @@
-resource "aws_security_group" "rds_sg" {
-  name        = "${var.env_prefix}-rds-sg"
-  description = "Security group for RDS"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description     = "MySQL access from web servers"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [var.web_sg_id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_db_subnet_group" "db" {
+  name       = "${var.db_name}-subnet-group"
+  subnet_ids = var.subnet_ids
 
   tags = {
-    Name        = "${var.env_prefix}-rds-sg"
-    Environment = var.env_prefix
+    Name = "${var.db_name}-subnet-group"
   }
 }
 
-resource "aws_db_subnet_group" "rds" {
-  name       = "${var.env_prefix}-rds-subnet-group"
-  subnet_ids = var.private_subnets
-
-  tags = {
-    Name        = "${var.env_prefix}-rds-subnet-group"
-    Environment = var.env_prefix
-  }
-}
-
-resource "aws_db_instance" "default" {
-  allocated_storage      = var.allocated_storage
-  storage_type           = var.storage_type
+resource "aws_db_instance" "db" {
+  identifier              = var.db_name
   engine                 = "mysql"
-  engine_version         = var.engine_version
-  instance_class         = var.instance_class
+  engine_version         = "5.7"
+  instance_class         = var.db_instance_class
+  allocated_storage      = var.allocated_storage
+  storage_type           = "gp2"
   db_name                = var.db_name
   username               = var.db_username
   password               = var.db_password
   parameter_group_name   = "default.mysql5.7"
+  db_subnet_group_name   = aws_db_subnet_group.db.name
+  vpc_security_group_ids = [var.security_group_id]
   skip_final_snapshot    = true
-  db_subnet_group_name   = aws_db_subnet_group.rds.name
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  multi_az               = var.multi_az
   publicly_accessible    = false
-  backup_retention_period = var.backup_retention_period
+  multi_az               = false
+  storage_encrypted      = true
 
   tags = {
-    Name        = "${var.env_prefix}-rds-instance"
-    Environment = var.env_prefix
+    Name = var.db_name
   }
 }
