@@ -1,60 +1,67 @@
 terraform {
-  required_version = ">= 1.3.0"
-
+  required_version = ">= 1.0.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 4.0"
     }
-  }
-
-  backend "s3" {
-    bucket = "seetharam-terraform-states"
-    key    = "2tier/terraform.tfstate"
-    region = "us-east-1"
   }
 }
 
 provider "aws" {
   region = var.aws_region
-
-  default_tags {
-    tags = {
-      Environment = var.environment
-      Project     = "2tier-architecture"
-      Terraform   = "true"
-    }
-  }
 }
 
 module "vpc" {
   source = "./modules/vpc"
 
-  vpc_cidr           = var.vpc_cidr
-  public_subnets     = var.public_subnets
-  private_subnets    = var.private_subnets
-  availability_zones = var.availability_zones
-  environment        = var.environment
+  project_name     = var.project_name
+  vpc_cidr         = var.vpc_cidr
+  public_subnets   = var.public_subnets
+  private_subnets  = var.private_subnets
+  database_subnets = var.database_subnets
 }
 
-module "ec2" {
+module "web" {
   source = "./modules/ec2"
 
-  vpc_id             = module.vpc.vpc_id
-  public_subnets     = module.vpc.public_subnets
-  ami_id             = var.ami_id
-  instance_type      = var.instance_type
-  key_name           = var.key_name
-  environment        = var.environment
+  instance_count    = var.web_instance_count
+  instance_type    = var.web_instance_type
+  subnet_ids       = module.vpc.public_subnet_ids
+  security_group_ids = [module.vpc.web_sg_id]
+  ami              = var.web_ami
+  key_name         = var.key_name
+  user_data        = file("${path.module}/user_data/web_user_data.sh")
+  tags = {
+    Name = "${var.project_name}-web"
+    Tier = "web"
+  }
 }
 
-module "rds" {
-  source          = "./modules/rds"
-  vpc_id          = module.vpc.vpc_id
-  private_subnets = module.vpc.private_subnets
-  web_sg_id       = module.ec2.web_sg_id
-  db_name         = var.db_name
-  db_username     = var.db_username
-  db_password     = var.db_password
-  env_prefix      = var.environment
+module "app" {
+  source = "./modules/ec2"
+
+  instance_count    = var.app_instance_count
+  instance_type    = var.app_instance_type
+  subnet_ids       = module.vpc.private_subnet_ids
+  security_group_ids = [module.vpc.app_sg_id]
+  ami              = var.app_ami
+  key_name         = var.key_name
+  user_data        = file("${path.module}/user_data/app_user_data.sh")
+  tags = {
+    Name = "${var.project_name}-app"
+    Tier = "app"
+  }
+}
+
+module "db" {
+  source = "./modules/rds"
+
+  db_name           = var.db_name
+  db_username       = var.db_username
+  db_password       = var.db_password
+  db_instance_class = var.db_instance_class
+  subnet_ids        = module.vpc.database_subnet_ids
+  security_group_id = module.vpc.db_sg_id
+  allocated_storage = var.allocated_storage
 }
