@@ -55,7 +55,7 @@ variable "web_instance_type" {
 variable "web_ami" {
   description = "AMI ID for web servers"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0"
+  default     = "ami-0fc5d935ebf8bc3bc"
 }
 
 variable "app_instance_count" {
@@ -73,7 +73,7 @@ variable "app_instance_type" {
 variable "app_ami" {
   description = "AMI ID for app servers"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0"
+  default     = "ami-0fc5d935ebf8bc3bc"
 }
 
 variable "key_name" {
