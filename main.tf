@@ -9,11 +9,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "my-terraform-state-bucket"
+    bucket         = "seetharam-terraform-states"  # ✅ Update with your real S3 bucket name
     key            = "2tier-project/terraform.tfstate"
-    region         = "us-west-2"  # Make sure this matches your actual S3 bucket region
+    region         = "us-west-2"                    # ✅ Ensure this matches your actual S3 bucket region
     encrypt        = true
-    dynamodb_table = "terraform-lock"
+    dynamodb_table = "terraform-lock"               # ✅ Ensure this table exists in us-west-2
   }
 }
 
@@ -39,7 +39,7 @@ module "rds" {
   source          = "./modules/rds"
   vpc_id          = module.vpc.vpc_id
   private_subnets = module.vpc.private_subnets
-  web_sg_id       = module.ec2.web_sg_id
+  web_sg_id = module.ec2.web_sg_id
   db_name         = var.db_name
   db_username     = var.db_username
   db_password     = var.db_password
