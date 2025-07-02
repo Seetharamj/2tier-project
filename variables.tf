@@ -5,9 +5,12 @@ variable "aws_region" {
 }
 
 variable "environment" {
-  description = "Environment name for tagging"
+  description = "Environment name (dev/stage/prod)"
   type        = string
-  default     = "dev"
+  validation {
+    condition     = contains(["dev", "stage", "prod"], var.environment)
+    error_message = "Environment must be dev, stage, or prod."
+  }
 }
 
 variable "vpc_cidr" {
@@ -19,11 +22,11 @@ variable "vpc_cidr" {
 variable "ec2_instance_type" {
   description = "Instance type for EC2"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "key_name" {
-  description = "Name of the EC2 key pair"
+  description = "Name of existing EC2 key pair"
   type        = string
 }
 
@@ -36,13 +39,13 @@ variable "ec2_ami_id" {
 variable "db_name" {
   description = "RDS database name"
   type        = string
-  default     = "mydb"
+  sensitive   = true
 }
 
 variable "db_username" {
   description = "RDS database username"
   type        = string
-  default     = "admin"
+  sensitive   = true
 }
 
 variable "db_password" {
