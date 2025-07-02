@@ -1,4 +1,3 @@
-# Global Configuration
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
@@ -6,18 +5,11 @@ variable "aws_region" {
 }
 
 variable "project_name" {
-  description = "Name of the project (used for resource naming)"
+  description = "Name of the project"
   type        = string
   default     = "2tier-app"
 }
 
-variable "environment" {
-  description = "Deployment environment (dev/stage/prod)"
-  type        = string
-  default     = "dev"
-}
-
-# Network Configuration
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
@@ -25,26 +17,25 @@ variable "vpc_cidr" {
 }
 
 variable "public_subnets" {
-  description = "List of public subnet CIDRs"
+  description = "List of public subnets"
   type        = list(string)
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 variable "private_subnets" {
-  description = "List of private subnet CIDRs"
+  description = "List of private subnets"
   type        = list(string)
   default     = ["10.0.3.0/24", "10.0.4.0/24"]
 }
 
 variable "database_subnets" {
-  description = "List of database subnet CIDRs"
+  description = "List of database subnets"
   type        = list(string)
   default     = ["10.0.5.0/24", "10.0.6.0/24"]
 }
 
-# Web Tier Configuration
 variable "web_instance_count" {
-  description = "Number of web tier instances"
+  description = "Number of web instances"
   type        = number
   default     = 2
 }
@@ -55,84 +46,80 @@ variable "web_instance_type" {
   default     = "t3.micro"
 }
 
-variable "web_ami" {
-  description = "AMI ID for web servers"
-  type        = string
-  default     = "ami-0fc5d935ebf8bc3bc" # Amazon Linux 2023
-}
-
-# Application Tier Configuration
 variable "app_instance_count" {
-  description = "Number of application tier instances"
+  description = "Number of app instances"
   type        = number
   default     = 2
 }
 
 variable "app_instance_type" {
-  description = "Instance type for application servers"
+  description = "Instance type for app servers"
   type        = string
   default     = "t3.micro"
 }
 
-variable "app_ami" {
-  description = "AMI ID for application servers"
+variable "web_ami" {
+  description = "AMI ID for web servers"
   type        = string
-  default     = "ami-0fc5d935ebf8bc3bc" # Amazon Linux 2023
+  default     = "ami-0c02fb55956c7d316" # Amazon Linux 2 (us-east-1)
 }
 
-# Database Configuration
+variable "app_ami" {
+  description = "AMI ID for app servers"
+  type        = string
+  default     = "ami-0c02fb55956c7d316"
+}
+
+variable "key_name" {
+  description = "SSH key pair name"
+  type        = string
+}
+
 variable "db_name" {
-  description = "RDS database name"
+  description = "Database name"
   type        = string
   default     = "mydb"
 }
 
 variable "db_username" {
-  description = "RDS master username"
+  description = "Database username"
   type        = string
   default     = "admin"
 }
 
 variable "db_password" {
-  description = "RDS master password"
+  description = "Database password"
   type        = string
   sensitive   = true
 }
 
 variable "db_instance_class" {
-  description = "RDS instance type"
+  description = "Database instance class"
   type        = string
   default     = "db.t3.micro"
 }
 
 variable "allocated_storage" {
-  description = "RDS storage size in GB"
+  description = "Allocated storage for database in GB"
   type        = number
   default     = 20
 }
 
-# Security Configuration
-variable "key_name" {
-  description = "Name of existing EC2 key pair for SSH access"
+variable "environment" {
+  description = "Environment name"
   type        = string
+  default     = "dev"
 }
 
-# Load Balancer Configuration
-variable "lb_target_group_arn" {
-  description = "ARN of the load balancer target group for web tier"
+# ✅ Add these to match your tfvars and remove warnings
+variable "ec2_instance_type" {
+  description = "Instance type for EC2 instance"
   type        = string
-  default     = ""
+  default     = "t3.micro"
 }
 
-variable "create_lb_attachment" {
-  description = "Whether to create load balancer attachments for web tier"
-  type        = bool
-  default     = true
-}
-
-# Tags Configuration
-variable "additional_tags" {
-  description = "Additional tags to apply to all resources"
-  type        = map(string)
-  default     = {}
+variable "ec2_ami_id" {
+  description = "AMI ID for EC2 instance"
+  type        = string
+  default     = "ami-0c02fb55956c7d316"
 }
