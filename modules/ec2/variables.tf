@@ -1,11 +1,7 @@
-variable "vpc_id" {
-  description = "VPC ID where resources will be created"
-  type        = string
-}
-
-variable "public_subnets" {
-  description = "List of public subnet IDs"
-  type        = list(string)
+variable "instance_count" {
+  description = "Number of instances to create"
+  type        = number
+  default     = 1
 }
 
 variable "instance_type" {
@@ -14,58 +10,40 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
-variable "ami_id" {
-  description = "AMI ID for EC2 instances"
+variable "ami" {
+  description = "AMI ID for the instance"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0" # Amazon Linux 2
+}
+
+variable "subnet_ids" {
+  description = "List of subnet IDs"
+  type        = list(string)
+}
+
+variable "security_group_ids" {
+  description = "List of security group IDs"
+  type        = list(string)
 }
 
 variable "key_name" {
-  description = "Name of the EC2 key pair"
+  description = "SSH key pair name"
   type        = string
 }
 
-variable "env_prefix" {
-  description = "Environment prefix for naming"
+variable "user_data" {
+  description = "User data script"
   type        = string
-  default     = "dev"
+  default     = ""
 }
 
-variable "desired_capacity" {
-  description = "Desired number of EC2 instances"
-  type        = number
-  default     = 2
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
 }
 
-variable "min_size" {
-  description = "Minimum number of EC2 instances"
-  type        = number
-  default     = 2
-}
-
-variable "max_size" {
-  description = "Maximum number of EC2 instances"
-  type        = number
-  default     = 4
-}
-
-variable "db_endpoint" {
-  description = "RDS endpoint for application connection"
+variable "lb_target_group_arn" {
+  description = "Load balancer target group ARN"
   type        = string
-}
-
-variable "db_name" {
-  description = "Database name"
-  type        = string
-}
-
-variable "db_username" {
-  description = "Database username"
-  type        = string
-}
-
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
+  default     = ""
 }
