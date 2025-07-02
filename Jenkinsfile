@@ -33,7 +33,7 @@ pipeline {
             }
         }
     }
-}
+    
     post {
         always {
             script {
@@ -46,8 +46,10 @@ pipeline {
             }
         }
         failure {
-            echo 'check the code it get continues error'
-            )
+            echo 'Pipeline failed - please check the build logs for errors'
+            mail to: '007herohero@gmail.com',
+                 subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
+                 body: "Check console output at ${env.BUILD_URL}"
         }
     }
 }
