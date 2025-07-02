@@ -9,11 +9,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "seetharam-terraform-states"  # ✅ Update with your real S3 bucket name
-    key            = "2tier-project/terraform.tfstate"
-    region         = "us-west-2"                    # ✅ Ensure this matches your actual S3 bucket region
-    encrypt        = true
-    dynamodb_table = "terraform-lock"               # ✅ Ensure this table exists in us-west-2
+    bucket = "seetharam-terraform-states"
+    key    = "2tier/terraform.tfstate"
+    region = "us-east-1"
   }
 }
 
@@ -30,32 +28,33 @@ provider "aws" {
 }
 
 module "vpc" {
-  source     = "./modules/vpc"
-  cidr_block = var.vpc_cidr
-  env_prefix = var.environment
+  source = "./modules/vpc"
+
+  vpc_cidr           = var.vpc_cidr
+  public_subnets     = var.public_subnets
+  private_subnets    = var.private_subnets
+  availability_zones = var.availability_zones
+  environment        = var.environment
+}
+
+module "ec2" {
+  source = "./modules/ec2"
+
+  vpc_id             = module.vpc.vpc_id
+  public_subnets     = module.vpc.public_subnets
+  ami_id             = var.ami_id
+  instance_type      = var.instance_type
+  key_name           = var.key_name
+  environment        = var.environment
 }
 
 module "rds" {
   source          = "./modules/rds"
   vpc_id          = module.vpc.vpc_id
   private_subnets = module.vpc.private_subnets
-  web_sg_id = module.ec2.web_sg_id
+  web_sg_id       = module.ec2.web_sg_id
   db_name         = var.db_name
   db_username     = var.db_username
   db_password     = var.db_password
   env_prefix      = var.environment
-}
-
-module "ec2" {
-  source         = "./modules/ec2"
-  vpc_id         = module.vpc.vpc_id
-  public_subnets = module.vpc.public_subnets
-  instance_type  = var.ec2_instance_type
-  key_name       = var.key_name
-  env_prefix     = var.environment
-  ami_id         = var.ec2_ami_id
-  db_endpoint    = module.rds.rds_endpoint
-  db_name        = var.db_name
-  db_username    = var.db_username
-  db_password    = var.db_password
 }
