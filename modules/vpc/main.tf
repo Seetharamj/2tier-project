@@ -68,7 +68,9 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_eip" "nat" {
   count = length(var.public_subnets)
-  domain = "vpc"
+  tags = {
+    Name = "${var.project_name}-eip-${count.index + 1}"
+  }
 }
 
 resource "aws_nat_gateway" "nat" {
@@ -101,7 +103,7 @@ resource "aws_route_table_association" "private" {
 
 resource "aws_security_group" "web" {
   name        = "${var.project_name}-web-sg"
-  description = "Security group for web tier"
+  description = "Web tier SG"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -139,7 +141,7 @@ resource "aws_security_group" "web" {
 
 resource "aws_security_group" "app" {
   name        = "${var.project_name}-app-sg"
-  description = "Security group for app tier"
+  description = "App tier SG"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -170,7 +172,7 @@ resource "aws_security_group" "app" {
 
 resource "aws_security_group" "db" {
   name        = "${var.project_name}-db-sg"
-  description = "Security group for database tier"
+  description = "DB tier SG"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -198,7 +200,6 @@ resource "aws_lb" "web" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.web.id]
   subnets            = aws_subnet.public[*].id
-
   enable_deletion_protection = false
 
   tags = {
