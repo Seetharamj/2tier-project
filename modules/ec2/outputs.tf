@@ -1,15 +1,14 @@
-output "web_sg_id" {
-  description = "Security group ID of web instances"
-  value       = aws_security_group.web_sg.id
+output "instance_ids" {
+  description = "List of instance IDs"
+  value       = aws_instance.instance[*].id
 }
 
-output "alb_dns_name" {
-  description = "DNS name of the ALB"
-
-  value       = aws_lb.web.dns_name
+output "instance_public_ips" {
+  description = "List of public IP addresses"
+  value       = aws_instance.instance[*].public_ip
 }
 
-output "asg_name" {
-  description = "Name of the Auto Scaling Group"
-  value       = aws_autoscaling_group.web.name
+output "instance_private_ips" {
+  description = "List of private IP addresses"
+  value       = aws_instance.instance[*].private_ip
 }
