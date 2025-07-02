@@ -104,3 +104,12 @@ variable "allocated_storage" {
   type        = number
   default     = 20
 }
+variable "ec2_ami_id" {
+  description = "AMI ID for EC2 instance"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}
