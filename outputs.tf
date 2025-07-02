@@ -1,5 +1,21 @@
+output "web_tier_url" {
+  description = "URL of the web application"
+  value       = "http://${module.ec2.alb_dns_name}"
+}
+
+output "database_endpoint" {
+  description = "RDS endpoint for application connection"
+  value       = module.rds.rds_endpoint
+  sensitive   = true
+}
+
+output "web_instance_security_group" {
+  description = "Security group ID for web instances"
+  value       = module.ec2.web_sg_id
+}
+
 output "vpc_id" {
-  description = "ID of the VPC"
+  description = "ID of the created VPC"
   value       = module.vpc.vpc_id
 }
 
@@ -11,19 +27,4 @@ output "public_subnets" {
 output "private_subnets" {
   description = "List of private subnet IDs"
   value       = module.vpc.private_subnets
-}
-
-output "web_instance_public_ips" {
-  description = "Public IP addresses of web instances"
-  value       = module.ec2.web_instance_public_ips
-}
-
-output "rds_endpoint" {
-  description = "RDS instance endpoint"
-  value       = module.rds.rds_endpoint
-}
-
-output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = module.ec2.alb_dns_name
 }
