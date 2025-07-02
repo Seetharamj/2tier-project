@@ -4,24 +4,24 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        TF_VAR_db_password    = credentials('TF_DB_PASSWORD')
-        TF_VAR_key_name       = 'my-ssh-key'
+        AWS_REGION           = 'us-east-1'
+        TF_VAR_db_password   = credentials('TF_DB_PASSWORD')
+        TF_VAR_key_name      = 'my-ssh-key'
     }
     
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                sh 'terraform version'
             }
         }
         
-        stage('Terraform Init') {
+        stage('Terraform Setup') {
             steps {
-                sh '''
-                cd 2tier-project
-                terraform init -input=false -backend-config="bucket=my-terraform-state-bucket" -backend-config="key=2tier-project/terraform.tfstate"
-                '''
+                script {
+                    sh 'terraform --version'
+                    sh 'cd 2tier-project && terraform init -input=false'
+                }
             }
         }
         
@@ -54,7 +54,7 @@ pipeline {
             }
         }
         
-        stage('Infrastructure Tests') {
+        stage('Verify Deployment') {
             steps {
                 script {
                     def alb_dns = sh(script: 'cd 2tier-project && terraform output -raw alb_dns_name', returnStdout: true).trim()
@@ -71,11 +71,11 @@ pipeline {
         success {
             script {
                 def alb_dns = sh(script: 'cd 2tier-project && terraform output -raw alb_dns_name', returnStdout: true).trim()
-                slackSend(color: 'good', message: "2-Tier deployment successful!\nApplication URL: http://${alb_dns}")
+                echo "Deployment successful! Application URL: http://${alb_dns}"
             }
         }
         failure {
-            slackSend(color: 'danger', message: "2-Tier deployment failed in ${env.STAGE_NAME}")
+            echo 'Deployment failed! Check the logs for details.'
         }
     }
 }
