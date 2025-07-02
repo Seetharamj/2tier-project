@@ -4,7 +4,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        TF_VAR_db_password    = credentials('RDS_DB_PASSWORD')
+        TF_VAR_db_password    = credentials('2TIER_RDS_MASTER_PASSWORD')
         AWS_REGION           = 'us-east-1'
     }
     
@@ -34,8 +34,13 @@ pipeline {
     }
     
     post {
-        always {
+    always {
+        node {
             cleanWs()
         }
     }
+    failure {
+        echo '❌ Pipeline failed - check logs'
+    }
+}
 }
