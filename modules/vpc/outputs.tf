@@ -1,34 +1,44 @@
 output "vpc_id" {
-  description = "ID of the VPC"
+  description = "VPC ID"
   value       = aws_vpc.main.id
 }
 
-output "public_subnets" {
+output "public_subnet_ids" {
   description = "List of public subnet IDs"
   value       = aws_subnet.public[*].id
 }
 
-output "private_subnets" {
+output "private_subnet_ids" {
   description = "List of private subnet IDs"
   value       = aws_subnet.private[*].id
 }
 
-output "public_subnet_cidrs" {
-  description = "List of public subnet CIDR blocks"
-  value       = aws_subnet.public[*].cidr_block
+output "database_subnet_ids" {
+  description = "List of database subnet IDs"
+  value       = aws_subnet.database[*].id
 }
 
-output "private_subnet_cidrs" {
-  description = "List of private subnet CIDR blocks"
-  value       = aws_subnet.private[*].cidr_block
+output "web_sg_id" {
+  description = "Web security group ID"
+  value       = aws_security_group.web.id
 }
 
-output "nat_gateway_ips" {
-  description = "List of NAT Gateway public IPs"
-  value       = aws_eip.nat[*].public_ip
+output "app_sg_id" {
+  description = "App security group ID"
+  value       = aws_security_group.app.id
 }
 
-output "vpc_cidr_block" {
-  description = "CIDR block of the VPC"
-  value       = aws_vpc.main.cidr_block
+output "db_sg_id" {
+  description = "Database security group ID"
+  value       = aws_security_group.db.id
+}
+
+output "lb_dns_name" {
+  description = "Load Balancer DNS name"
+  value       = aws_lb.web.dns_name
+}
+
+output "lb_target_group_arn" {
+  description = "Load Balancer Target Group ARN"
+  value       = aws_lb_target_group.web.arn
 }
