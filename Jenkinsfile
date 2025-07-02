@@ -2,54 +2,76 @@ pipeline {
     agent any
     
     environment {
-        // Use your existing credential ID exactly as created
-        TF_VAR_db_password = credentials('2TIER_RDS_MASTER_PASSWORD')
-        
-        // Other environment variables
+        // Credentials - verify these exist in Jenkins
         AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        TF_VAR_db_password    = credentials('2TIER_RDS_MASTER_PASSWORD')
+        AWS_REGION           = 'us-east-1'  // Explicit region setting
     }
     
     stages {
         stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/Seetharamj/2tier-project.git',
-                        credentialsId: 'GITHUB_CREDS' // Ensure this exists
-                    ]]
-                ])
+                script {
+                    try {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/main']],
+                            extensions: [],
+                            userRemoteConfigs: [[
+                                // Create this credential in Jenkins
+                                credentialsId: 'GITHUB_CREDS',
+                                url: 'https://github.com/Seetharamj/2tier-project.git'
+                            ]]
+                        ])
+                    } catch (err) {
+                        error("Checkout failed: ${err.message}")
+                    }
+                }
+            }
+        }
+        
+        stage('Terraform Init') {
+            steps {
+                dir('./terraform') {
+                    script {
+                        try {
+                            sh '''
+                                terraform init \
+                                    -backend-config="bucket=your-terraform-state-bucket" \
+                                    -backend-config="key=2tier-project/terraform.tfstate" \
+                                    -backend-config="region=${AWS_REGION}"
+                            '''
+                        } catch (err) {
+                            error("Terraform init failed: ${err.message}")
+                        }
+                    }
+                }
             }
         }
         
         stage('Terraform Apply') {
             steps {
-                sh '''
-                    terraform init
-                    terraform apply -auto-approve
-                '''
+                dir('./terraform') {
+                    script {
+                        try {
+                            sh 'terraform apply -auto-approve'
+                        } catch (err) {
+                            error("Terraform apply failed: ${err.message}")
+                        }
+                    }
+                }
             }
         }
     }
     
     post {
         always {
-            script {
-                // Clean workspace only if we have node context
-                if (env.NODE_NAME != null) {
-                    cleanWs()
-                } else {
-                    echo 'Skipping workspace clean: no node context'
-                }
-            }
+            cleanWs()
         }
         failure {
-            echo 'Pipeline failed - please check the build logs for errors'
-            mail to: '007herohero@gmail.com',
-                 subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
-                 body: "Check console output at ${env.BUILD_URL}"
+            echo 'Pipeline failed - check the build logs'
+            // Basic notification since email isn't configured
         }
     }
 }
